@@ -1,102 +1,15 @@
-<!-- 
-ros2 launch stretch_core stretch_driver.launch.py rviz:=True
-ros2 launch stretch_core d435i_low_resolution.launch.py
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml
-
-python3 -m http.server 8000 
--->
-
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <title>Stretch4Sugar Controller</title>
-
+  
+  <!-- External Libraries -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/hello-vinitha/roslibjs@ros2actionclient/build/roslib.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #121212;
-      color: #e0e0e0;
-    }
-    h1 {
-      text-align: center;
-      color: #ffffff;
-    }
-    .card {
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 20px;
-      background-color: #1e1e1e;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-    .camera-feed {
-      width: 100%;
-      height: 400px;
-      background-color: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .camera-feed img {
-      max-width: 100%;
-      max-height: 100%;
-      transform: rotate(90deg);
-    }
-    .button {
-      background-color: #801ad4;
-      border: none;
-      color: white;
-      padding: 10px 15px;
-      margin: 4px 2px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background-color 0.3s;
-    }
-    .button:hover:not(:disabled) {
-      background-color: #801ad4;
-    }
-    .button-outline {
-      background-color: #1e1e1e;
-      border: 1px solid #801ad4;
-      color: #801ad4;
-    }
-    .control-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      max-width: 300px;
-      margin: 0 auto;
-    }
-    .two-column {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    @media (min-width: 600px) {
-      .two-column {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-    .robot-controls {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .camera-controls-buttons {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-  </style>
+  
+  <!-- Custom CSS and JavaScript -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -109,7 +22,7 @@ python3 -m http.server 8000
     </div>
   </div>
 
-  <div class="two-column">
+  <div class="grid-container two-column">
     <!-- Connection Status & Movement -->
     <div>
       <div class="card">
@@ -121,16 +34,38 @@ python3 -m http.server 8000
         <h3>Movement Controls</h3>
         <div class="control-grid">
           <div></div>
-          <button class="button button-outline" onclick="moveBaseForward()">↑</button>
+          <button class="button button-outline" onclick="RobotControl.moveBaseForward()">↑</button>
           <div></div>
-          <button class="button button-outline" onclick="rotateLeft()">←</button>
-          <button class="button button-outline" onclick="initial()">■</button>
-          <button class="button button-outline" onclick="rotateRight()">→</button>
+          <button class="button button-outline" onclick="RobotControl.rotateRight()">←</button>
+          <button class="button button-outline" onclick="RobotControl.homeRobot()">■</button>
+          <button class="button button-outline" onclick="RobotControl.rotateLeft()">→</button>
           <div></div>
-          <button class="button button-outline" onclick="moveBaseBackward()">↓</button>
+          <button class="button button-outline" onclick="RobotControl.moveBaseBackward()">↓</button>
           <div></div>
         </div>
+        <div class="slider-controls">
+          <label for="baseMovementSlider">Base Movement Intensity: <span id="baseMovementValue">0.1</span></label>
+          <input type="range" id="baseMovementSlider" min="0.05" max="0.5" step="0.05" value="0.1" oninput="updateBaseMovementValue(this.value)">
+        </div>
       </div>
+
+          <!-- Pose A Controls -->
+    <div class="card">
+      <h3>Pose A</h3>
+      <button class="button" onclick="RobotControl.savePoseA()">Save Pose A</button>
+      <button class="button button-outline" onclick="RobotControl.executePoseA()">Go to Pose A</button>
+
+
+      <!-- Incase they didn't work -->
+      <!-- Pose A Controls – keep as is -->
+      <!-- <button class="button" onclick="PBD.saveCurrentPose('Pose A','world')">Save Pose A</button>
+      <button class="button button-outline" onclick="PBD.playSequence(['Pose A'])">Go to Pose A</button> -->
+
+      <!-- Status text element for feedback -->
+      <div id="poseAstatus" style="margin-top:10px; font-style:italic;">
+        Status: idle
+      </div>
+    </div>
     </div>
 
     <!-- Arm, Gripper, Camera -->
@@ -138,203 +73,40 @@ python3 -m http.server 8000
       <div class="card">
         <h3>Arm & Gripper Controls</h3>
         <div class="robot-controls">
-          <button class="button" onclick="openGripper()">Open Gripper</button>
-          <button class="button" onclick="closeGripper()">Close Gripper</button>
-          <button class="button" onclick="moveLiftToTop()">Lift to Top</button>
-          <button class="button" onclick="moveLiftToMiddle()">Lift to Middle</button>
-          <button class="button" onclick="prePositionRobot()">Position Robot</button>
+          <button class="button" onclick="RobotControl.openGripper()">Open Gripper</button>
+          <button class="button" onclick="RobotControl.closeGripper()">Close Gripper</button>
+          <button class="button" onclick="RobotControl.moveLiftToTop()">Lift to Top</button>
+          <button class="button" onclick="RobotControl.moveLiftToMiddle()">Lift to Middle</button>
+          <button class="button" onclick="RobotControl.positionRobot()">Position Robot</button>
+        </div>
+        <div class="slider-controls">
+          <label for="gripperSlider">Gripper Aperture: <span id="gripperValue">0.1</span></label>
+          <input type="range" id="gripperSlider" min="-0.05" max="0.2" step="0.01" value="0.1" oninput="updateGripperValue(this.value)">
+          
+          <label for="liftSlider">Lift Height: <span id="liftValue">0.6</span></label>
+          <input type="range" id="liftSlider" min="0.1" max="1.2" step="0.1" value="0.6" oninput="updateLiftValue(this.value)">
         </div>
       </div>
 
       <div class="card">
         <h3>Camera Controls</h3>
         <div class="camera-controls-buttons">
-          <button class="button" onclick="lookLeft()">Look Left</button>
-          <button class="button" onclick="lookRight()">Look Right</button>
-          <button class="button" onclick="lookUp()">Look Up</button>
-          <button class="button" onclick="lookDown()">Look Down</button>
-          <button class="button" onclick="lookCenter()">Center</button>
+          <button class="button" onclick="RobotControl.lookLeft()">Look Left</button>
+          <button class="button" onclick="RobotControl.lookRight()">Look Right</button>
+          <button class="button" onclick="RobotControl.lookUp()">Look Up</button>
+          <button class="button" onclick="RobotControl.lookDown()">Look Down</button>
+          <button class="button" onclick="RobotControl.lookCenter()">Center</button>
+        </div>
+        <div class="slider-controls">
+          <label for="cameraSlider">Camera Movement Range: <span id="cameraValue">0.8</span></label>
+          <input type="range" id="cameraSlider" min="0.1" max="1.5" step="0.1" value="0.8" oninput="updateCameraValue(this.value)">
         </div>
       </div>
     </div>
   </div>
 
-  <!-- JavaScript -->
-  <script type="text/javascript">
-    let ros = new ROSLIB.Ros({
-      url: 'ws://rocky.hcrlab.cs.washington.edu:9090'
-    });
-
-    let trajectoryClient;
-    let angularSpeed = 0.5;
-
-    const subscribeToCameraVideo = () => {
-      const cameraImage = document.getElementById("cameraImage");
-      const topic = new ROSLIB.Topic({
-        ros: ros,
-        name: "/camera/color/image_raw/compressed",
-        messageType: "sensor_msgs/CompressedImage",
-      });
-      topic.subscribe((message) => {
-        cameraImage.src = "data:image/jpg;base64," + message.data;
-      });
-    };
-
-    const createTrajectoryClient = () => {
-      trajectoryClient = new ROSLIB.ActionHandle({
-        ros: ros,
-        name: "/stretch_controller/follow_joint_trajectory",
-        actionType: "control_msgs/action/FollowJointTrajectory",
-      });
-    };
-
-    const executeFollowJointTrajectory = (jointNames, jointPositions) => {
-      const goal = new ROSLIB.ActionGoal({
-        trajectory: {
-          header: { stamp: { secs: 0, nsecs: 0 } },
-          joint_names: jointNames,
-          points: [
-            {
-              positions: jointPositions,
-              time_from_start: { secs: 1, nsecs: 0 },
-            },
-          ],
-        },
-      });
-      trajectoryClient.createClient(goal);
-    };
-
-
-    const prePositionRobot = () => {
-      switchToPositionMode((success) => {
-        if (success) {
-          // Step 1: Move forward 1 meter
-          executeFollowJointTrajectory(['translate_mobile_base'], [1.0]);
-
-          // Step 2: Rotate after a short delay (adjust if needed)
-          setTimeout(() => {
-            executeFollowJointTrajectory(['rotate_mobile_base'], [1.57]); // ~90 degrees
-          }, 2000); // Wait 2 seconds for the forward motion to finish
-        }
-      });
-    };
-
-    
-
-    // Gripper and Lift
-    const openGripper = () => executeFollowJointTrajectory(['gripper_aperture'], [0.1]);
-    const closeGripper = () => executeFollowJointTrajectory(['gripper_aperture'], [-0.03]);
-    const moveLiftToTop = () => executeFollowJointTrajectory(['joint_lift'], [1.1]);
-    const moveLiftToMiddle = () => executeFollowJointTrajectory(['joint_lift'], [0.6]);
-
-    // Base Movement
-    const moveBaseForward = () => {
-      switchToPositionMode((success) => {
-        if (success) {
-          executeFollowJointTrajectory(['translate_mobile_base'], [0.1]);
-        }
-      });
-    };
-    const moveBaseBackward = () => {
-      switchToPositionMode((success) => {
-        if (success) {
-          executeFollowJointTrajectory(['translate_mobile_base'], [-0.1]);
-        }
-      });
-    };
-
-    // Camera Head Movement
-    const lookLeft = () => executeFollowJointTrajectory(['joint_head_pan'], [0.8]);
-    const lookRight = () => executeFollowJointTrajectory(['joint_head_pan'], [-0.8]);
-    const lookUp = () => executeFollowJointTrajectory(['joint_head_tilt'], [0.4]);
-    const lookDown = () => executeFollowJointTrajectory(['joint_head_tilt'], [-0.6]);
-    const lookCenter = () => executeFollowJointTrajectory(['joint_head_pan', 'joint_head_tilt'], [0.0, 0.0]);
-
-    // Rotation
-    const rotateLeft = () => sendTwist(angularSpeed);
-    const rotateRight = () => sendTwist(-angularSpeed);
-
-    const sendTwist = (zSpeed) => {
-      switchToNavigationMode((success) => {
-        if (success) {
-          const cmdVel = new ROSLIB.Topic({
-            ros: ros,
-            name: '/stretch/cmd_vel',
-            messageType: 'geometry_msgs/msg/Twist'
-          });
-          const twist = new ROSLIB.Message({
-            linear: { x: 0.0, y: 0.0, z: 0.0 },
-            angular: { x: 0.0, y: 0.0, z: zSpeed }
-          });
-          cmdVel.publish(twist);
-        }
-      });
-    };
-
-    // Home robot
-    const initial = () => {
-      const homeService = new ROSLIB.Service({
-        ros: ros,
-        name: '/home_the_robot',
-        serviceType: 'std_srvs/srv/Trigger'
-      });
-      homeService.callService(new ROSLIB.ServiceRequest({}), (result) => {
-        console.log("Home service response:", result);
-      });
-    };
-
-    // Mode switching
-    const switchToNavigationMode = (callback) => {
-      const switchModeClient = new ROSLIB.Service({
-        ros: ros,
-        name: '/switch_to_navigation_mode',
-        serviceType: 'std_srvs/srv/Trigger'
-      });
-      const request = new ROSLIB.ServiceRequest({});
-      switchModeClient.callService(request, function(result) {
-        callback(result.success);
-      }, function(error) {
-        console.error('Error calling switch_to_navigation_mode:', error);
-        callback(false);
-      });
-    };
-
-    const switchToPositionMode = (callback) => {
-      const switchModeClient = new ROSLIB.Service({
-        ros: ros,
-        name: '/switch_to_position_mode',
-        serviceType: 'std_srvs/srv/Trigger'
-      });
-      const request = new ROSLIB.ServiceRequest({});
-      switchModeClient.callService(request, function(result) {
-        if (result.success) {
-          console.log("Switched to position mode.");
-          callback(true);
-        } else {
-          console.error("Failed to switch to position mode:", result.message);
-          callback(false);
-        }
-      }, function(error) {
-        console.error('Error calling switch_to_position_mode:', error);
-        callback(false);
-      });
-    };
-
-    // ROS Events
-    ros.on('connection', () => {
-      document.getElementById('connection').innerText = "Connected to Stretch";
-      subscribeToCameraVideo();
-      createTrajectoryClient();
-    });
-
-    ros.on('error', (error) => {
-      document.getElementById('connection').innerText = "Connection error: check websocket";
-      console.log(error);
-    });
-
-    ros.on('close', () => {
-      document.getElementById('connection').innerText = "Disconnected";
-    });
-  </script>
+  <!-- Custom Scripts -->
+  <script src="rosConnection.js"></script>
+  <script src="robotController.js"></script>
 </body>
 </html>
