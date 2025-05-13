@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Stretch4Sugar Controller</title>
+  
+  <!-- External Libraries -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/hello-vinitha/roslibjs@ros2actionclient/build/roslib.min.js"></script>
+  
+  <!-- Custom CSS and JavaScript -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <h1>Stretch4Sugar Controller</h1>
+
+  <!-- Camera Feed -->
+  <div class="card">
+    <div class="camera-feed">
+      <img id="cameraImage" alt="Camera Feed" />
+    </div>
+  </div>
+
+  <div class="grid-container two-column">
+    <!-- Connection Status & Movement -->
+    <div>
+      <div class="card">
+        <h3>Connection Status</h3>
+        <div id="connection">Connecting...</div>
+      </div>
+
+      <div class="card">
+        <h3>Movement Controls</h3>
+        <div class="control-grid">
+          <div></div>
+          <button class="button button-outline" onclick="RobotControl.moveBaseForward()">↑</button>
+          <div></div>
+          <button class="button button-outline" onclick="RobotControl.rotateRight()">←</button>
+          <button class="button button-outline" onclick="RobotControl.homeRobot()">■</button>
+          <button class="button button-outline" onclick="RobotControl.rotateLeft()">→</button>
+          <div></div>
+          <button class="button button-outline" onclick="RobotControl.moveBaseBackward()">↓</button>
+          <div></div>
+        </div>
+        <div class="slider-controls">
+          <label for="baseMovementSlider">Base Movement Intensity: <span id="baseMovementValue">0.1</span></label>
+          <input type="range" id="baseMovementSlider" min="0.05" max="0.5" step="0.05" value="0.1" oninput="updateBaseMovementValue(this.value)">
+        </div>
+      </div>
+
+          <!-- Pose A Controls -->
+    <div class="card">
+      <h3>Pose A</h3>
+      <button class="button" onclick="RobotControl.savePoseA()">Save Pose A</button>
+      <button class="button button-outline" onclick="RobotControl.executePoseA()">Go to Pose A</button>
+
+
+      <!-- Incase they didn't work -->
+      <!-- Pose A Controls – keep as is -->
+      <!-- <button class="button" onclick="PBD.saveCurrentPose('Pose A','world')">Save Pose A</button>
+      <button class="button button-outline" onclick="PBD.playSequence(['Pose A'])">Go to Pose A</button> -->
+
+      <!-- Status text element for feedback -->
+      <div id="poseAstatus" style="margin-top:10px; font-style:italic;">
+        Status: idle
+      </div>
+    </div>
+    </div>
+
+    <!-- Arm, Gripper, Camera -->
+    <div>
+      <div class="card">
+        <h3>Arm & Gripper Controls</h3>
+        <div class="robot-controls">
+          <button class="button" onclick="RobotControl.openGripper()">Open Gripper</button>
+          <button class="button" onclick="RobotControl.closeGripper()">Close Gripper</button>
+          <button class="button" onclick="RobotControl.moveLiftToTop()">Lift to Top</button>
+          <button class="button" onclick="RobotControl.moveLiftToMiddle()">Lift to Middle</button>
+          <button class="button" onclick="RobotControl.positionRobot()">Position Robot</button>
+        </div>
+        <div class="slider-controls">
+          <label for="gripperSlider">Gripper Aperture: <span id="gripperValue">0.1</span></label>
+          <input type="range" id="gripperSlider" min="-0.05" max="0.2" step="0.01" value="0.1" oninput="updateGripperValue(this.value)">
+          
+          <label for="liftSlider">Lift Height: <span id="liftValue">0.6</span></label>
+          <input type="range" id="liftSlider" min="0.1" max="1.2" step="0.1" value="0.6" oninput="updateLiftValue(this.value)">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Camera Controls</h3>
+        <div class="camera-controls-buttons">
+          <button class="button" onclick="RobotControl.lookLeft()">Look Left</button>
+          <button class="button" onclick="RobotControl.lookRight()">Look Right</button>
+          <button class="button" onclick="RobotControl.lookUp()">Look Up</button>
+          <button class="button" onclick="RobotControl.lookDown()">Look Down</button>
+          <button class="button" onclick="RobotControl.lookCenter()">Center</button>
+        </div>
+        <div class="slider-controls">
+          <label for="cameraSlider">Camera Movement Range: <span id="cameraValue">0.8</span></label>
+          <input type="range" id="cameraSlider" min="0.1" max="1.5" step="0.1" value="0.8" oninput="updateCameraValue(this.value)">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script src="rosConnection.js"></script>
+  <script src="robotController.js"></script>
+</body>
+</html>
