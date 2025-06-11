@@ -49,23 +49,15 @@
         </div>
       </div>
 
-          <!-- Pose A Controls -->
-    <div class="card">
-      <h3>Pose A</h3>
-      <button class="button" onclick="RobotControl.savePoseA()">Save Pose A</button>
-      <button class="button button-outline" onclick="RobotControl.executePoseA()">Go to Pose A</button>
-
-
-      <!-- Incase they didn't work -->
-      <!-- Pose A Controls – keep as is -->
-      <!-- <button class="button" onclick="PBD.saveCurrentPose('Pose A','world')">Save Pose A</button>
-      <button class="button button-outline" onclick="PBD.playSequence(['Pose A'])">Go to Pose A</button> -->
-
-      <!-- Status text element for feedback -->
-      <div id="poseAstatus" style="margin-top:10px; font-style:italic;">
-        Status: idle
+      <!-- Pose A Controls -->
+      <div class="card">
+        <h3>Pose A</h3>
+        <button class="button" onclick="RobotControl.savePoseA()">Save Pose A</button>
+        <button class="button button-outline" onclick="RobotControl.executePoseA()">Go to Pose A</button>
+        <div id="poseAstatus" style="margin-top:10px; font-style:italic;">
+          Status: idle
+        </div>
       </div>
-    </div>
     </div>
 
     <!-- Arm, Gripper, Camera -->
@@ -79,12 +71,36 @@
           <button class="button" onclick="RobotControl.moveLiftToMiddle()">Lift to Middle</button>
           <button class="button" onclick="RobotControl.positionRobot()">Position Robot</button>
         </div>
+        <div class="arm-controls">
+          <button class="button" onclick="RobotControl.extendArm()">Extend Arm</button>
+          <button class="button" onclick="RobotControl.retractArm()">Retract Arm</button>
+        </div>
+        
+        <!-- New Gripper Orientation Controls -->
+        <div class="gripper-orientation-controls">
+          <button class="button" onclick="RobotControl.rotateGripperCW()">Rotate CW</button>
+          <button class="button" onclick="RobotControl.rotateGripperCCW()">Rotate CCW</button>
+          <button class="button" onclick="RobotControl.pitchGripperUp()">Pitch Up</button>
+          <button class="button" onclick="RobotControl.pitchGripperDown()">Pitch Down</button>
+        </div>
+
+        
         <div class="slider-controls">
           <label for="gripperSlider">Gripper Aperture: <span id="gripperValue">0.1</span></label>
-          <input type="range" id="gripperSlider" min="-0.05" max="0.2" step="0.01" value="0.1" oninput="updateGripperValue(this.value)">
+          <input type="range" id="gripperSlider" min="0.0" max="0.2" step="0.01" value="0.1" oninput="updateGripperValue(this.value)">
           
           <label for="liftSlider">Lift Height: <span id="liftValue">0.6</span></label>
-          <input type="range" id="liftSlider" min="0.1" max="1.2" step="0.1" value="0.6" oninput="updateLiftValue(this.value)">
+          <input type="range" id="liftSlider" min="0.1" max="1.2" step="0.01" value="0.6" oninput="updateLiftValue(this.value)">
+          
+          <label for="armSlider">Arm Extension: <span id="armValue">0.0</span></label>
+          <input type="range" id="armSlider" min="0.0" max="0.5" step="0.01" value="0.0" oninput="updateArmValue(this.value)">
+          
+          <!-- New Gripper Orientation Sliders -->
+          <label for="gripperRotationSlider">Gripper Rotation Amount: <span id="gripperRotationValue">0.2</span></label>
+          <input type="range" id="gripperRotationSlider" min="0.1" max="1.0" step="0.05" value="0.2" oninput="updateGripperRotationValue(this.value)">
+          
+          <label for="gripperPitchSlider">Gripper Pitch Amount: <span id="gripperPitchValue">0.2</span></label>
+          <input type="range" id="gripperPitchSlider" min="0.1" max="0.8" step="0.05" value="0.2" oninput="updateGripperPitchValue(this.value)">
         </div>
       </div>
 
